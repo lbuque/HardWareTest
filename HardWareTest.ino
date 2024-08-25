@@ -22,7 +22,7 @@
 #define DC_PIN 0
 #define RESET_PIN 4
 #define LCD_HOST  SPI2_HOST
-#define EXAMPLE_LCD_PIXEL_CLOCK_HZ     (10 * 1000 * 1000)
+#define EXAMPLE_LCD_PIXEL_CLOCK_HZ     (4 * 1000 * 1000)
 
 
 // select one of the following options
@@ -31,7 +31,7 @@
 
 #if USE_LGFX
 class C3GFX: public lgfx::LGFX_Device {
-    lgfx::Panel_ILI9342 _panel_instance;
+    lgfx::Panel_ST7789P3 _panel_instance;
     lgfx::Bus_SPI       _spi_bus_instance;
     lgfx::Light_PWM     _light_instance;
 
@@ -54,14 +54,14 @@ public:
 
             cfg.spi_host = LCD_HOST;
             cfg.spi_mode = 0;
-            cfg.freq_write = 10 * 1000 * 1000;
-            cfg.freq_read = 16000000;
+            cfg.freq_write = 4 * 1000 * 1000;
+            cfg.freq_read = 4 * 1000 * 1000;
             cfg.spi_3wire = true;
             // cfg.use_lock = true;
             // cfg.dma_channel = 3; // AUTO
             cfg.pin_sclk = SCK_PIN;
             cfg.pin_mosi = MOSI_PIN;
-            cfg.pin_miso = MOSI_PIN;
+            cfg.pin_miso = -1;
             cfg.pin_dc = -1;
 
             _spi_bus_instance.config(cfg);
@@ -95,6 +95,22 @@ public:
         _panel_instance.setLight(&_light_instance);
         setPanel(&_panel_instance);
     };
+
+    // override the init()
+    inline bool init(void)
+    {
+        // HW_Reset();
+        lgfx::pinMode(GPIO_NUM_4, lgfx::pin_mode_t::output);
+        lgfx::gpio_hi(GPIO_NUM_4);
+        lgfx::delay(100);
+        lgfx::gpio_lo(GPIO_NUM_4);
+        lgfx::delay(120);
+        lgfx::gpio_hi(GPIO_NUM_4);
+        delay(120); // ms
+
+        /* Lgfx */
+        return lgfx::LGFX_Device::init();
+    }
 };
 
 C3GFX lcd;
@@ -265,7 +281,7 @@ void SPI_3Wire_Interface_Init()
     memset(&devcfg, 0, sizeof(devcfg));
     devcfg.command_bits = 1;     //D/Cx位，0 cmd， 1 data
     devcfg.mode = 0;   //CPOL, CPHA xSPI_CPOL_CPHA_mode = 0
-    devcfg.clock_speed_hz = 10 * 1000 * 1000; //=1MHz
+    devcfg.clock_speed_hz = 4 * 1000 * 1000; //=1MHz
     devcfg.spics_io_num = CS_PIN;
     devcfg.flags = SPI_DEVICE_3WIRE | SPI_DEVICE_HALFDUPLEX; //3线半双工
     devcfg.queue_size = 8;
